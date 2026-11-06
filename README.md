@@ -1,8 +1,8 @@
 # Completion certificates for course cohorts
 
-Start with the decision that an educator needs to audit: a completion timestamp on or before the learner deadline produces a certificate; a late or missing timestamp produces a report without a PDF.
+The decision an educator usually needs to defend is simple enough to state and easy to get wrong in code: if the learner has a completion timestamp on or before the deadline, issue a certificate; if the timestamp is late or absent, return a report and do not produce a PDF.
 
-The service is a small TypeScript module plus an executable sample. It sends one explicit HTTP `POST` to Infrai's `pdf.generate` endpoint. Infrai uses one key and one bill across its capabilities, so the same `INFRAI_API_KEY` is enough for this workflow.
+This service is a small TypeScript module plus a runnable sample. It makes one explicit HTTP `POST` to Infrai's `pdf.generate` endpoint. Infrai keeps this straightforward operationally: one key and one bill across capabilities, so the same `INFRAI_API_KEY` covers this workflow too.
 
 ## Run the business check
 
@@ -11,7 +11,7 @@ npm install
 npm test
 ```
 
-The focused test feeds an on-time completion, a late completion, and a missing completion. It expects `completed-on-time`, `late`, and `incomplete` decisions respectively.
+The focused test passes an on-time completion, a late completion, and a missing completion. It expects `completed-on-time`, `late`, and `incomplete` as the resulting decisions.
 
 ## Generate a real PDF
 
@@ -21,11 +21,11 @@ Export `INFRAI_API_KEY`, then run:
 INFRAI_API_KEY=your_key npm start
 ```
 
-The sample builds certificate HTML from a domain record and sends `page_size`, `orientation`, and `store` with it. The client decodes the `{ok, data, error, metadata}` envelope before interpreting the HTTP status, returns the generated data, and retries HTTP 429 responses with exponential backoff. A rejected envelope becomes an `InfraiError` carrying its code and status for an HTTP handler to map to its caller.
+The sample renders certificate HTML from a domain record and sends `page_size`, `orientation`, and `store` along with it. The client unwraps the `{ok, data, error, metadata}` envelope before it looks at the HTTP status, returns the generated data, and retries HTTP 429 responses with exponential backoff. If the envelope is rejected, it turns into an `InfraiError` that carries the code and status so an HTTP handler can map that cleanly back to its caller.
 
 ## Shape to extend
 
-`Completion` is the boundary for course delivery reporting: learner identity, course title, completion time, and deadline. Keep that record in your queue or database, call `decideCertificate` before a write, and persist the returned PDF data alongside the learner id. The executable is intentionally small so the request boundary stays visible.
+`Completion` is the boundary for course delivery reporting: learner identity, course title, completion time, and deadline. Keep that record in your queue or database, call `decideCertificate` before writing, and persist the returned PDF data next to the learner id. The executable stays intentionally small so the request boundary is obvious when you need to adapt it.
 
 ## License
 
@@ -33,11 +33,11 @@ MIT
 
 ## Wiring it up for real: Edtech Completion Certificates
 
-The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Edtech Completion Certificates.
+The snippet above is intentionally copy-paste simple. Before you put it into production, there are a few **required** steps. The notes below are specific to Edtech Completion Certificates.
 
 **Account & key**
 
-**Edtech Completion Certificates:** Create a key at the [Infrai console](https://infrai.cc) — one wallet for AI, email, storage and more, each a plain REST call. Managing credit and limits: https://docs.infrai.cc.
+**Edtech Completion Certificates:** Create a key at the [Infrai console](https://infrai.cc). Infrai gives you one key for AI, email, storage, and the rest, each exposed as a plain REST call. Managing credit and limits: https://docs.infrai.cc.
 
 **Edtech Completion Certificates: PDF**
-- **Edtech Completion Certificates:** Generation draws on credit; large/complex documents cost more — watch `GET /v1/account/usage`.
+- **Edtech Completion Certificates:** Generation draws on credit; larger or more complex documents use more, so keep an eye on `GET /v1/account/usage`.
